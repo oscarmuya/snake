@@ -13,7 +13,9 @@ pub struct GameWorld {
     pub grid: Grid,
     pub snake_body: Vec<[u32; 2]>,
     pub apple: [u32; 2],
+    pub score: u32,
     pub direction: Direction,
+    pub snake_fps: f32,
 }
 
 impl GameWorld {
@@ -23,8 +25,14 @@ impl GameWorld {
             grid,
             direction: Direction::Down,
             apple: [grid.grid_width / 2, grid.grid_height / 2],
+            score: 0,
             snake_body: vec![[0, 0], [0, 1]],
+            snake_fps: 8.0,
         }
+    }
+
+    pub fn update_score(&mut self) {
+        self.score += 1;
     }
 
     pub fn change_direction(&mut self, direction: Direction) {
@@ -39,6 +47,8 @@ impl GameWorld {
 
     pub fn check_for_apple(&mut self) {
         if self.snake_body.first().unwrap() == &[self.apple[0], self.apple[1]] {
+            self.update_score();
+            self.snake_fps += 2.0 * (self.score / 5) as f32;
             let next = self.get_next();
             self.snake_body.insert(0, next);
             self.apple = [random(self.grid.grid_width), random(self.grid.grid_height)];
@@ -46,47 +56,48 @@ impl GameWorld {
     }
 
     pub fn get_next(&mut self) -> [u32; 2] {
+        let max_x = self.grid.grid_width;
+        let max_y = self.grid.grid_height;
+
         match self.direction {
             Direction::Up => {
                 let last = self.snake_body.first().unwrap();
-                [last[0], last[1] - 1]
+                [last[0], if last[1] == 0 { max_y - 1 } else { last[1] - 1 }]
             }
             Direction::Left => {
                 let last = self.snake_body.first().unwrap();
-                [last[0] - 1, last[1]]
+                [if last[0] == 0 { max_x - 1 } else { last[0] - 1 }, last[1]]
             }
             Direction::Down => {
                 let last = self.snake_body.first().unwrap();
-                [last[0], last[1] + 1]
+                [last[0], if last[1] + 1 >= max_y { 0 } else { last[1] + 1 }]
             }
             Direction::Right => {
                 let last = self.snake_body.first().unwrap();
-                [last[0] + 1, last[1]]
+                [if last[0] + 1 >= max_x { 0 } else { last[0] + 1 }, last[1]]
             }
         }
     }
 
-    pub fn add_square(&mut self, size: u32, x: u32, y: u32) -> Square {
-        Square::new(size, x, y).on_grid(&self.grid)
+    pub fn add_square(&mut self, x: u32, y: u32) -> Square {
+        Square::new(x, y).on_grid(&self.grid)
     }
 
-    pub fn add_circle(&mut self, radius: u32, x: u32, y: u32) -> Circle {
-        Circle::new(radius, x, y).on_grid(&self.grid)
+    pub fn add_circle(&mut self, x: u32, y: u32) -> Circle {
+        Circle::new(x, y).on_grid(&self.grid)
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct Square {
-    pub size: u32,
     pub grid_x: u32,
     pub grid_y: u32,
     pub points: Vec<[u32; 2]>,
 }
 
 impl Square {
-    pub fn new(size: u32, grid_x: u32, grid_y: u32) -> Self {
+    pub fn new(grid_x: u32, grid_y: u32) -> Self {
         Self {
-            size,
             grid_x,
             grid_y,
             points: Vec::new(),
@@ -101,16 +112,14 @@ impl Square {
 
 #[derive(Clone, Debug)]
 pub struct Circle {
-    pub radius: u32,
     pub grid_x: u32,
     pub grid_y: u32,
     pub points: Vec<[u32; 2]>,
 }
 
 impl Circle {
-    pub fn new(radius: u32, grid_x: u32, grid_y: u32) -> Self {
+    pub fn new(grid_x: u32, grid_y: u32) -> Self {
         Self {
-            radius,
             grid_x,
             grid_y,
             points: Vec::new(),
@@ -149,6 +158,9 @@ impl Grid {
     pub fn change_window(&mut self, width: u32, height: u32) {
         self.width = width;
         self.height = height;
+
+        self.grid_height = height / self.size;
+        self.grid_width = width / self.size;
     }
 
     pub fn get_circle_points_at_grid(
