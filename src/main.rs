@@ -1,3 +1,4 @@
+mod constants;
 mod game;
 mod resource;
 use pixels::{Pixels, SurfaceTexture};
@@ -8,9 +9,6 @@ use winit::event::{ElementState, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
-
-const SNAKE_FPS: f32 = 8.0;
-const TIME_PER_UPDATE: f32 = 1.0 / SNAKE_FPS;
 
 struct App {
     game_world: Option<resource::GameWorld>,
@@ -127,16 +125,20 @@ impl ApplicationHandler for App {
                     self.time_accumulator += delta_time;
 
                     if let Some(game_world) = &mut self.game_world {
-                        while self.time_accumulator >= TIME_PER_UPDATE {
+                        let time_per_update = 1.0 / game_world.snake_fps;
+                        while self.time_accumulator >= time_per_update {
                             game_world.check_for_apple();
                             game_world.move_snake();
-                            self.time_accumulator -= TIME_PER_UPDATE;
+                            self.time_accumulator -= time_per_update;
                         }
-                        let apple =
-                            game_world.add_circle(1, game_world.apple[0], game_world.apple[1]);
+                        // draw score
+                        game::draw_number(game_world.score, 1, 1, pixels, self.width, game_world);
+                        // draw apple
+                        let apple = game_world.add_circle(game_world.apple[0], game_world.apple[1]);
                         game::draw_object(&apple.points, pixels, self.width);
+                        // draw snake
                         for point in game_world.snake_body.clone() {
-                            let square = game_world.add_square(1, point[0], point[1]);
+                            let square = game_world.add_square(point[0], point[1]);
                             game::draw_object(&square.points, pixels, self.width);
                         }
                     }

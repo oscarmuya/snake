@@ -1,10 +1,10 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::resource::GameWorld;
+use crate::{constants::POINT_MATRIX, resource::GameWorld};
 use pixels::Pixels;
 
 const COLOR: [u8; 4] = [255, 255, 255, 255];
-const SIZE: u32 = 20;
+const SIZE: u32 = 15;
 
 pub fn init(width: u32, height: u32) -> GameWorld {
     GameWorld::new(width, height, SIZE)
@@ -38,4 +38,29 @@ pub fn random(limit: u32) -> u32 {
         .unwrap()
         .subsec_nanos();
     nanos % limit
+}
+
+// Numbers
+pub fn draw_number(
+    number: u32,
+    x: u32,
+    y: u32,
+    pixels: &mut Pixels<'static>,
+    width: u32,
+    game_world: &mut GameWorld,
+) {
+    for (current_char, char) in number.to_string().chars().enumerate() {
+        let idx = char.to_digit(10).unwrap() as usize;
+        let matrix = POINT_MATRIX[idx];
+        for (i, row) in matrix.iter().enumerate() {
+            for (j, col) in row.iter().enumerate() {
+                if *col == 1 {
+                    let point_x = (x + j as u32) + (5 * current_char as u32) + 1;
+                    let point_y = y + i as u32;
+                    let square = game_world.add_square(point_x, point_y);
+                    draw_object(&square.points, pixels, width);
+                }
+            }
+        }
+    }
 }
