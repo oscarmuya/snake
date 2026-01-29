@@ -2,6 +2,9 @@
 
 This document details the architecture and implementation plan for **snake2**. I have designed this project as a graphical application built entirely in Rust, utilizing minimal, low-level crates for performance and control.
 
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/5c2e5d0d-1a7f-4c97-8847-04fd1525d9a0" />
+
+
 ## Technologies I Have Used
 
 I have deliberately kept the external dependencies lean to ensure high performance:
